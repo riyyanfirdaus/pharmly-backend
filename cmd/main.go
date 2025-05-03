@@ -2,24 +2,26 @@ package main
 
 import (
 	"log"
-	"os"
-	"pharmly-backend/config"
-
-	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
+	server "pharmly-backend/internal/Server"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+	application, err := server.NewApp()
+	if err != nil {
+		log.Fatal("Failed to initialize application:", err)
 	}
 
-	app := fiber.New(config.NewFiberConfig())
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	if err := application.Initialize(); err != nil {
+		log.Fatal("Failed to initialize components:", err)
 	}
 
-	log.Fatal(app.Listen(":" + port))
+	if err := application.Start(); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
+
+	defer func() {
+		if err := application.Shutdown(); err != nil {
+			log.Fatal("Failed to shutdown gracefully:", err)
+		}
+	}()
 }
