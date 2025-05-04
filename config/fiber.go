@@ -8,7 +8,7 @@ func NewFiberConfig() fiber.Config {
 	}
 }
 
-func errorHandler(c *fiber.Ctx, err error) error {
+func ErrorHandler(c *fiber.Ctx, err error) error {
 	code := fiber.StatusInternalServerError
 	if e, ok := err.(*fiber.Error); ok {
 		code = e.Code

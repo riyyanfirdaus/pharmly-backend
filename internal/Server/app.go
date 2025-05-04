@@ -7,6 +7,7 @@ import (
 	"pharmly-backend/config"
 	"pharmly-backend/internal/database"
 	"pharmly-backend/internal/handler"
+	"pharmly-backend/internal/middleware"
 	"pharmly-backend/internal/repository"
 	"pharmly-backend/internal/usecase"
 
@@ -21,6 +22,7 @@ type App struct {
 
 type RoutesOpts struct {
 	AuthHandler *handler.AuthHandler
+	UserHandler *handler.UserHandler
 }
 
 func NewApp() (*App, error) {
@@ -33,7 +35,9 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 
-	fiberApp := fiber.New(config.NewFiberConfig())
+	fiberConfig := config.NewFiberConfig()
+	fiberConfig.ErrorHandler = middleware.ErrorHandler()
+	fiberApp := fiber.New(fiberConfig)
 
 	return &App{
 		FiberApp: fiberApp,
@@ -45,11 +49,14 @@ func (a *App) Initialize() error {
 	userRepo := repository.NewUserRepository(a.DB.Conn)
 
 	authUsecase := usecase.NewAuthUsecase(userRepo)
+	userUsecase := usecase.NewUserUsecase(userRepo)
 
 	authHandler := handler.NewAuthHandler(authUsecase)
+	userHandler := handler.NewUserHandler(userUsecase)
 
 	SetupRouter(a.FiberApp, &RoutesOpts{
 		AuthHandler: authHandler,
+		UserHandler: userHandler,
 	})
 
 	return nil

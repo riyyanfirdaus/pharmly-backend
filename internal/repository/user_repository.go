@@ -13,6 +13,7 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
+	GetAll(ctx context.Context, page, pageSize int) ([]*entity.User, int64, error)
 	GetByEmail(ctx context.Context, email string) (*entity.User, error)
 	GetByID(ctx context.Context, id int64) (*entity.User, error)
 }
@@ -53,6 +54,62 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 
 	logger.Info().Str("email", user.Email).Int64("user_id", user.ID).Msg("User created successfully")
 	return nil
+}
+
+func (r *userRepository) GetAll(ctx context.Context, page, pageSize int) ([]*entity.User, int64, error) {
+	logger.Info().Int("page", page).Int("page_size", pageSize).Msg("Fetching paginated transactions")
+
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to begin transaction")
+		return nil, 0, err
+	}
+	defer tx.Rollback(ctx)
+
+	var total int64
+	err = tx.QueryRow(ctx, constant.QCountUserQuery).Scan(&total)
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to get total users count")
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+	rows, err := tx.Query(ctx, constant.QGetAllUsers, pageSize, offset)
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to fetch users")
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var users []*entity.User
+	for rows.Next() {
+		user := &entity.User{}
+		err := rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.FullName,
+			&user.Email,
+			&user.Password,
+			&user.Role,
+			&user.Status,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+			&user.DeletedAt,
+		)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to scan users row")
+			return nil, 0, err
+		}
+		users = append(users, user)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		logger.Error().Err(err).Msg("Failed to commit transaction")
+		return nil, 0, err
+	}
+
+	logger.Info().Int("count", len(users)).Int64("total", total).Msg("Transactions fetch successfully")
+	return users, total, nil
 }
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {

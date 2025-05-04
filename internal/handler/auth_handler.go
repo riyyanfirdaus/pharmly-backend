@@ -2,6 +2,8 @@ package handler
 
 import (
 	"pharmly-backend/internal/dto"
+	"pharmly-backend/internal/logger"
+	"pharmly-backend/internal/middleware"
 	"pharmly-backend/internal/usecase"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,35 +18,74 @@ func NewAuthHandler(usecase usecase.AuthUsecase) *AuthHandler {
 }
 
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
-	req := c.Locals("validatedRequest").(*dto.UserRequest)
+	var req dto.UserRequest
 
-	response, err := h.usecase.Register(c.Context(), req)
+	if err := c.BodyParser(&req); err != nil {
+		logger.Error().
+			Err(err).
+			Str("path", c.Path()).
+			Str("method", c.Method()).
+			Interface("body", c.Body()).
+			Msg("Failed to parse request body")
+		return err
+	}
+
+	if err := middleware.Validate.Struct(&req); err != nil {
+		logger.Error().
+			Err(err).
+			Str("path", c.Path()).
+			Str("method", c.Method()).
+			Interface("errors", middleware.GetValidationErrors(err)).
+			Msg("Validation failed")
+		return err
+	}
+
+	response, err := h.usecase.Register(c.Context(), &req)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":  "error",
-			"message": err.Error(),
-		})
+		logger.Error().
+			Err(err).
+			Str("path", c.Path()).
+			Str("method", c.Method()).
+			Msg("Failed to register user")
+		return err
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"status": "success",
-		"data":   response,
+		"status":  "success",
+		"message": "User registered successfully",
+		"data":    response,
 	})
 }
 
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
-	req := c.Locals("validatedRequest").(*dto.LoginRequest)
-
-	response, err := h.usecase.Login(c.Context(), req)
-	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"status":  "error",
-			"message": err.Error(),
-		})
+	var req dto.LoginRequest
+	if err := c.BodyParser(&req); err != nil {
+		logger.Error().
+			Err(err).
+			Str("path", c.Path()).
+			Str("method", c.Method()).
+			Interface("body", c.Body()).
+			Msg("Failed to parse request body")
+		return err
 	}
 
-	return c.JSON(fiber.Map{
-		"status": "succcess",
-		"data":   response,
+	if err := middleware.Validate.Struct(&req); err != nil {
+		return err
+	}
+
+	response, err := h.usecase.Login(c.Context(), &req)
+	if err != nil {
+		logger.Error().
+			Err(err).
+			Str("path", c.Path()).
+			Str("method", c.Method()).
+			Msg("Failed to login")
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "success",
+		"message": "Login successful",
+		"data":    response,
 	})
 }
