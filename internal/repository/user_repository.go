@@ -57,7 +57,7 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 }
 
 func (r *userRepository) GetAll(ctx context.Context, page, pageSize int) ([]*entity.User, int64, error) {
-	logger.Info().Int("page", page).Int("page_size", pageSize).Msg("Fetching paginated transactions")
+	logger.Info().Int("page", page).Int("page_size", pageSize).Msg("Fetching paginated users")
 
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
@@ -108,7 +108,7 @@ func (r *userRepository) GetAll(ctx context.Context, page, pageSize int) ([]*ent
 		return nil, 0, err
 	}
 
-	logger.Info().Int("count", len(users)).Int64("total", total).Msg("Transactions fetch successfully")
+	logger.Info().Int("count", len(users)).Int64("total", total).Msg("Users fetch successfully")
 	return users, total, nil
 }
 

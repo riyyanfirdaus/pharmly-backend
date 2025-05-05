@@ -16,7 +16,10 @@ func SetupRouter(app *fiber.App, handlers *RoutesOpts) {
 	auth.Post("/register", handlers.AuthHandler.Register)
 	auth.Post("/login", handlers.AuthHandler.Login)
 
+	v1.Use(middleware.AuthMiddleware())
 	users := v1.Group("/users")
-	users.Use(middleware.AuthMiddleware())
 	users.Get("/", handlers.UserHandler.GetUsers)
+
+	categories := v1.Group("/categories")
+	categories.Get("/", handlers.CategoryHandler.GetCategories)
 }

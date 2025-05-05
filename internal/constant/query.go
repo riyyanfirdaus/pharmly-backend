@@ -46,4 +46,24 @@ const (
 		FROM
 			users
 	`
+
+	QGetAllCategories = `
+	SELECT
+		id, name, description, parent_category_id, created_at, updated_at, deleted_at
+	FROM
+		categories
+	ORDER BY
+		updated_at
+	DESC
+	LIMIT
+		$1
+	OFFSET
+		$2
+`
+
+	QCountCategoryQuery = `
+	SELECT COUNT(*)
+	FROM
+		categories
+`
 )
