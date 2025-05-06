@@ -86,4 +86,24 @@ const (
 	FROM
 		products
 	`
+
+	QGetAllSuppliers = `
+	SELECT
+		id, name, contact_person, phone, address, email, created_at, updated_at, deleted_at
+	FROM
+		suppliers
+	ORDER BY
+		updated_at
+	DESC
+	LIMIT
+		$1
+	OFFSET
+		$2
+	`
+
+	QCountSupplierQuery = `
+	SELECT COUNT(*)
+	FROM
+		suppliers
+	`
 )
