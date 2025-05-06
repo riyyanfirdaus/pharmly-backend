@@ -22,4 +22,7 @@ func SetupRouter(app *fiber.App, handlers *RoutesOpts) {
 
 	categories := v1.Group("/categories")
 	categories.Get("/", handlers.CategoryHandler.GetCategories)
+
+	products := v1.Group("/products")
+	products.Get("/", handlers.ProductHandler.GetProducts)
 }

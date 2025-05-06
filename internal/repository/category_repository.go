@@ -34,14 +34,14 @@ func (r *categoryRepository) GetAll(ctx context.Context, page, pageSize int) ([]
 	var total int64
 	err = tx.QueryRow(ctx, constant.QCountCategoryQuery).Scan(&total)
 	if err != nil {
-		logger.Error().Err(err).Msg("Failed to get total users count")
+		logger.Error().Err(err).Msg("Failed to get total categories count")
 		return nil, 0, err
 	}
 
 	offset := (page - 1) * pageSize
 	rows, err := tx.Query(ctx, constant.QGetAllCategories, pageSize, offset)
 	if err != nil {
-		logger.Error().Err(err).Msg("Failed to fetch users")
+		logger.Error().Err(err).Msg("Failed to fetch categories")
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -59,7 +59,7 @@ func (r *categoryRepository) GetAll(ctx context.Context, page, pageSize int) ([]
 			&category.DeletedAt,
 		)
 		if err != nil {
-			logger.Error().Err(err).Msg("Failed to scan users row")
+			logger.Error().Err(err).Msg("Failed to scan categories row")
 			return nil, 0, err
 		}
 		categories = append(categories, category)

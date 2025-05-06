@@ -24,6 +24,7 @@ type RoutesOpts struct {
 	AuthHandler     *handler.AuthHandler
 	UserHandler     *handler.UserHandler
 	CategoryHandler *handler.CategoryHandler
+	ProductHandler  *handler.ProductHandler
 }
 
 func NewApp() (*App, error) {
@@ -49,19 +50,23 @@ func NewApp() (*App, error) {
 func (a *App) Initialize() error {
 	userRepo := repository.NewUserRepository(a.DB.Conn)
 	categoryRepo := repository.NewCategoryRepository(a.DB.Conn)
+	productRepo := repository.NewProductRepository(a.DB.Conn)
 
 	authUsecase := usecase.NewAuthUsecase(userRepo)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	categoryUsecase := usecase.NewCategoryUsecase(categoryRepo)
+	productUsecase := usecase.NewProductusecase(productRepo)
 
 	authHandler := handler.NewAuthHandler(authUsecase)
 	userHandler := handler.NewUserHandler(userUsecase)
 	categoryHandler := handler.NewCategoryHandler(categoryUsecase)
+	productHandler := handler.NewProductHandler(productUsecase)
 
 	SetupRouter(a.FiberApp, &RoutesOpts{
 		AuthHandler:     authHandler,
 		UserHandler:     userHandler,
 		CategoryHandler: categoryHandler,
+		ProductHandler:  productHandler,
 	})
 
 	return nil

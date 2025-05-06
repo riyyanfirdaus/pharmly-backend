@@ -59,11 +59,31 @@ const (
 		$1
 	OFFSET
 		$2
-`
+	`
 
 	QCountCategoryQuery = `
 	SELECT COUNT(*)
 	FROM
 		categories
-`
+	`
+
+	QGetAllProducts = `
+	SELECT
+		id, name, category_id, generic_name, description, price, stock, unit, expiration_date, barcode, supplier_id, min_stock, is_active, created_at, updated_at, deleted_at
+	FROM
+		products
+	ORDER BY
+		updated_at
+	DESC
+	LIMIT
+		$1
+	OFFSET
+		$2
+	`
+
+	QCountProductQuery = `
+	SELECT COUNT(*)
+	FROM
+		products
+	`
 )
