@@ -9,6 +9,7 @@ import (
 )
 
 type ProductUsecase interface {
+	CreateProduct(ctx context.Context, req *dto.ProductRequest) (*dto.ProductResponse, error)
 	GetAllProducts(ctx context.Context, page, pageSize int) ([]*entity.Product, *dto.PaginationResponse, error)
 }
 
@@ -18,6 +19,42 @@ type productsUsecase struct {
 
 func NewProductusecase(repo repository.ProductRepository) ProductUsecase {
 	return &productsUsecase{repo: repo}
+}
+
+func (u *productsUsecase) CreateProduct(ctx context.Context, req *dto.ProductRequest) (*dto.ProductResponse, error) {
+	product := &entity.Product{
+		Name:           req.Name,
+		CategoryID:     req.CategoryID,
+		GenericName:    req.GenericName,
+		Description:    &req.Description,
+		Price:          req.Price,
+		Stock:          req.Stock,
+		Unit:           req.Unit,
+		ExpirationDate: req.ExpirationDate,
+		Barcode:        req.Barcode,
+		SupplierID:     req.SupplierID,
+		MinStock:       req.MinStock,
+		IsActive:       req.IsActive,
+	}
+
+	if err := u.repo.Create(ctx, product); err != nil {
+		return nil, err
+	}
+
+	return &dto.ProductResponse{
+		Name:           product.Name,
+		CategoryID:     product.CategoryID,
+		GenericName:    product.GenericName,
+		Description:    product.Description,
+		Price:          product.Price,
+		Stock:          product.Stock,
+		Unit:           product.Unit,
+		ExpirationDate: product.ExpirationDate,
+		Barcode:        product.Barcode,
+		SupplierID:     product.SupplierID,
+		MinStock:       product.MinStock,
+		IsActive:       product.IsActive,
+	}, nil
 }
 
 func (u *productsUsecase) GetAllProducts(ctx context.Context, page, pageSize int) ([]*entity.Product, *dto.PaginationResponse, error) {
