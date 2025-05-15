@@ -42,6 +42,7 @@ func (u *productsUsecase) CreateProduct(ctx context.Context, req *dto.ProductReq
 	}
 
 	return &dto.ProductResponse{
+		ID:             product.ID,
 		Name:           product.Name,
 		CategoryID:     product.CategoryID,
 		GenericName:    product.GenericName,
