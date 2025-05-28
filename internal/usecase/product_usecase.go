@@ -6,11 +6,15 @@ import (
 	"pharmly-backend/internal/entity"
 	"pharmly-backend/internal/logger"
 	"pharmly-backend/internal/repository"
+	"time"
 )
 
 type ProductUsecase interface {
 	CreateProduct(ctx context.Context, req *dto.ProductRequest) (*dto.ProductResponse, error)
+	GetProductByID(ctx context.Context, id int64) (*entity.Product, error)
 	GetAllProducts(ctx context.Context, page, pageSize int) ([]*entity.Product, *dto.PaginationResponse, error)
+	UpdateProduct(ctx context.Context, id int64, req *dto.ProductRequest) (*dto.ProductResponse, error)
+	DeleteProduct(ctx context.Context, id int64) error
 }
 
 type productsUsecase struct {
@@ -58,6 +62,19 @@ func (u *productsUsecase) CreateProduct(ctx context.Context, req *dto.ProductReq
 	}, nil
 }
 
+func (u *productsUsecase) GetProductByID(ctx context.Context, id int64) (*entity.Product, error) {
+	logger.Info().Int64("product_id", id).Msg("Fetching product by ID")
+
+	product, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		logger.Error().Err(err).Int64("product_id", id).Msg("Failed to fetch product")
+		return nil, err
+	}
+
+	logger.Info().Int64("product_id", id).Msg("Product fetched successfully")
+	return product, nil
+}
+
 func (u *productsUsecase) GetAllProducts(ctx context.Context, page, pageSize int) ([]*entity.Product, *dto.PaginationResponse, error) {
 	logger.Info().Int("page", page).Int("page_size", pageSize).Msg("Fetching paginated products")
 
@@ -87,4 +104,70 @@ func (u *productsUsecase) GetAllProducts(ctx context.Context, page, pageSize int
 
 	logger.Info().Int("count", len(products)).Int64("total", total).Msg("Products fetched successfully")
 	return products, pagination, nil
+}
+
+func (u *productsUsecase) UpdateProduct(ctx context.Context, id int64, req *dto.ProductRequest) (*dto.ProductResponse, error) {
+	logger.Info().Int64("product_id", id).Msg("Starting product update process")
+
+	product, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		logger.Error().Err(err).Int64("transaction_id", id).Msg("Failed to fetch transaction")
+	}
+
+	product.Name = req.Name
+	product.CategoryID = req.CategoryID
+	product.GenericName = req.GenericName
+	product.Description = &req.Description
+	product.Price = req.Price
+	product.Stock = req.Stock
+	product.Unit = req.Unit
+	product.ExpirationDate = req.ExpirationDate
+	product.Barcode = req.Barcode
+	product.SupplierID = req.SupplierID
+	product.MinStock = req.MinStock
+	product.IsActive = req.IsActive
+	product.UpdatedAt = time.Now()
+
+	if err := u.repo.Update(ctx, product); err != nil {
+		logger.Error().Err(err).Int64("product_id", id).Msg("Failed to update product")
+		return nil, err
+	}
+
+	logger.Info().Int64("product_id", id).Msg("Product updated successfully")
+	return &dto.ProductResponse{
+		ID:             product.ID,
+		Name:           product.Name,
+		CategoryID:     product.CategoryID,
+		GenericName:    product.GenericName,
+		Description:    product.Description,
+		Price:          product.Price,
+		Stock:          product.Stock,
+		Unit:           product.Unit,
+		ExpirationDate: product.ExpirationDate,
+		Barcode:        product.Barcode,
+		SupplierID:     product.SupplierID,
+		MinStock:       product.MinStock,
+		IsActive:       product.IsActive,
+		CreatedAt:      product.CreatedAt,
+		UpdatedAt:      product.UpdatedAt,
+		DeletedAt:      product.DeletedAt,
+	}, nil
+}
+
+func (u *productsUsecase) DeleteProduct(ctx context.Context, id int64) error {
+	logger.Info().Int64("product_id", id).Msg("Starting product deletion proccess")
+
+	_, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		logger.Error().Err(err).Int64("product_id", id).Msg("Failed to fetch product")
+		return nil
+	}
+
+	if err := u.repo.Delete(ctx, id); err != nil {
+		logger.Error().Err(err).Int64("product_id", id).Msg("Failed to delete product")
+		return nil
+	}
+
+	logger.Info().Int64("product_id", id).Msg("Product deleted successfully")
+	return nil
 }

@@ -25,7 +25,10 @@ func SetupRouter(app *fiber.App, handlers *RoutesOpts) {
 
 	products := v1.Group("/products")
 	products.Post("/", handlers.ProductHandler.AddProduct)
+	products.Get("/:id", handlers.ProductHandler.GetProductByID)
 	products.Get("/", handlers.ProductHandler.GetProducts)
+	products.Put("/", handlers.ProductHandler.UpdateProduct)
+	products.Delete("/", handlers.ProductHandler.DeleteProduct)
 
 	suppliers := v1.Group("/suppliers")
 	suppliers.Get("/", handlers.SupplierHandler.GetSuppliers)
